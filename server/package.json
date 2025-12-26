@@ -1,0 +1,22 @@
+{
+  "name": "mindvault-server",
+  "version": "1.0.0",
+  "description": "MindVault Backend API with MongoDB Atlas Vector Search",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "setup:index": "node src/scripts/createVectorIndex.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongodb": "^6.3.0",
+    "openai": "^4.24.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

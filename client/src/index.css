@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Note card hover effect */
+.note-card {
+  transition: all 0.2s ease;
+}
+
+.note-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Search highlight */
+.search-highlight {
+  background: linear-gradient(120deg, #fef08a 0%, #fef08a 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 40%;
+  background-position: 0 90%;
+}
+
+/* Related notes sidebar */
+.related-sidebar {
+  background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+/* Tag styles */
+.tag {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.tag-travel { @apply bg-blue-100 text-blue-800; }
+.tag-health { @apply bg-green-100 text-green-800; }
+.tag-work { @apply bg-orange-100 text-orange-800; }
+.tag-personal { @apply bg-pink-100 text-pink-800; }
+.tag-ideas { @apply bg-yellow-100 text-yellow-800; }
+.tag-learning { @apply bg-indigo-100 text-indigo-800; }
+.tag-goals { @apply bg-red-100 text-red-800; }
+.tag-memories { @apply bg-purple-100 text-purple-800; }
+.tag-finance { @apply bg-emerald-100 text-emerald-800; }
+.tag-relationships { @apply bg-rose-100 text-rose-800; }
+.tag-creativity { @apply bg-fuchsia-100 text-fuchsia-800; }
+.tag-wellness { @apply bg-teal-100 text-teal-800; }
+.tag-technology { @apply bg-cyan-100 text-cyan-800; }
+.tag-food { @apply bg-amber-100 text-amber-800; }
+.tag-entertainment { @apply bg-violet-100 text-violet-800; }
+.tag-nature { @apply bg-lime-100 text-lime-800; }
+.tag-gratitude { @apply bg-sky-100 text-sky-800; }
+.tag-reflection { @apply bg-slate-100 text-slate-800; }
