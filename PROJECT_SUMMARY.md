@@ -2,15 +2,16 @@
 
 ## ✅ What's Been Built
 
-### Backend (Node.js + Express)
-- ✅ MongoDB Atlas connection setup
-- ✅ Vector embedding service using OpenAI (text-embedding-3-small)
-- ✅ AI categorization service using GPT-3.5
+### Backend (Node.js + Express + PostgreSQL)
+- ✅ PostgreSQL with pgvector extension setup
+- ✅ Vector embedding service using Google Gemini (text-embedding-004)
+- ✅ AI categorization service using Gemini Pro
 - ✅ Complete CRUD API for notes
-- ✅ Semantic search using MongoDB $vectorSearch
+- ✅ Semantic search using pgvector cosine similarity
 - ✅ Related notes functionality
 - ✅ Real-time content-based note suggestions
 - ✅ Auto-tag suggestion endpoint
+- ✅ Database initialization script
 
 ### Frontend (React + Vite + TailwindCSS)
 - ✅ Modern, responsive UI with gradient themes
@@ -27,13 +28,44 @@
 
 ### Features Implemented
 1. ✅ **Semantic Search** - Find notes by meaning, not keywords
-2. ✅ **Vector Embeddings** - Each note converted to 1536-dimensional vector
-3. ✅ **MongoDB Vector Search** - Using cosine similarity for relevance
+2. ✅ **Vector Embeddings** - Each note converted to 768-dimensional vector
+3. ✅ **PostgreSQL Vector Search** - Using cosine similarity for relevance
 4. ✅ **Related Notes Sidebar** - Shows similar notes when viewing/editing
 5. ✅ **Real-Time Suggestions** - As you type, see related notes instantly
 6. ✅ **AI Auto-Categorization** - Suggests tags based on content
 7. ✅ **Beautiful UI** - Modern design with Tailwind CSS
 8. ✅ **Relevance Scoring** - Shows match percentage in search results
+
+---
+
+## 🎯 Technology Stack
+
+| Component | Technology | Why? |
+|-----------|------------|------|
+| **Database** | PostgreSQL + pgvector | Open-source, powerful, free vector search |
+| **AI/Embeddings** | Google Gemini | FREE API, 768-dim vectors, fast |
+| **Backend** | Node.js + Express | Fast, scalable REST API |
+| **Frontend** | React + Vite | Modern, fast, component-based |
+| **Styling** | Tailwind CSS | Utility-first, beautiful design |
+
+### Why PostgreSQL over MongoDB?
+
+✅ **FREE** - No paid Atlas cluster needed  
+✅ **Local Development** - Run on your machine  
+✅ **pgvector** - Built-in vector similarity search  
+✅ **Mature** - Battle-tested, widely supported  
+✅ **SQL** - Powerful queries and joins  
+✅ **Flexible Hosting** - Many free/cheap options
+
+### Why Gemini over OpenAI?
+
+✅ **FREE** - No credit card required  
+✅ **60 requests/min** - Perfect for personal use  
+✅ **768 dimensions** - Faster than OpenAI's 1536  
+✅ **Same quality** - Comparable embedding performance  
+✅ **Google AI** - Latest technology
+
+---
 
 ## 📁 Project Structure
 
@@ -98,29 +130,54 @@ If you get permission denied, authenticate with:
 - SSH key
 - GitHub CLI: `gh auth login`
 
-### 2. Set Up MongoDB Atlas
+### 2. Set Up PostgreSQL
 
-Follow the detailed guide in `MONGODB_SETUP.md`:
-1. Create free MongoDB Atlas account
-2. Create cluster, database, and collection
-3. **Important**: Create Vector Search Index named `vector_index`
-4. Get connection string
+Follow the detailed guide in `POSTGRESQL_SETUP.md`
 
-### 3. Get OpenAI API Key
+**Quick Start with Docker:**
+```bash
+docker run -d --name mindvault-postgres \
+  -e POSTGRES_DB=mindvault \
+  -e POSTGRES_USER=mindvault_user \
+  -e POSTGRES_PASSWORD=your_password \
+  -p 5432:5432 \
+  pgvector/pgvector:pg15
+```
 
-1. Go to https://platform.openai.com/api-keys
-2. Create a new API key
-3. Copy it for the .env file
+**Or use Free Cloud Options:**
+- Supabase (FREE 500MB, pgvector included)
+- Neon (FREE 3GB, serverless)
 
-### 4. Configure Environment
+### 3. Initialize Database
+
+```bash
+cd server
+npm run init:db
+```
+
+This creates:
+- Notes table with vector column
+- pgvector extension
+- Cosine similarity indexes
+- Auto-update triggers
+
+### 4. Get Gemini API Key
+
+1. Go to https://makersuite.google.com/app/apikey
+2. Click "Create API Key"
+3. Copy it for the .env file (it's FREE!)
+
+### 5. Configure Environment
 
 ```bash
 cd server
 cp .env.example .env
-# Edit .env with your credentials
+# Edit .env:
+DATABASE_URL=postgresql://mindvault_user:your_password@localhost:5432/mindvault
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### 5. Install & Run
+### 6. Run the App
 
 ```bash
 # From project root
@@ -128,17 +185,27 @@ npm run install:all  # Install all dependencies
 npm run dev         # Start both server and client
 ```
 
-Or use the setup script:
-```bash
-./setup.sh
-```
-
-### 6. Access the App
+### 7. Access
 
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
 
-## 🎯 Key API Endpoints
+---
+
+## 💰 Cost Breakdown
+
+| Component | Option | Cost/Month |
+|-----------|--------|------------|
+| Database | Local PostgreSQL | **$0** |
+| Database | Docker | **$0** |
+| Database | Supabase Free | **$0** |
+| Database | Neon Free | **$0** |
+| AI/Embeddings | Gemini API | **$0** |
+| **TOTAL** | | **$0** 🎉 |
+
+Compare to MongoDB Atlas + OpenAI: ~$20-50/month
+
+---
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|

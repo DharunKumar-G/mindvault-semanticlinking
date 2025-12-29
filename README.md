@@ -1,10 +1,10 @@
 # MindVault 🧠✨
 
-**Semantic Personal Notes powered by MongoDB Atlas Vector Search**
+**Semantic Personal Notes powered by PostgreSQL pgvector & Google Gemini**
 
 MindVault is a second-brain application that understands the *intent* and *context* of your thoughts, not just keywords. It uses AI-powered embeddings and vector search to connect related ideas, even when they share zero overlapping words.
 
-![MindVault Banner](https://img.shields.io/badge/AI-Powered-purple?style=for-the-badge) ![MongoDB Atlas](https://img.shields.io/badge/MongoDB-Atlas-green?style=for-the-badge) ![MERN Stack](https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge)
+![MindVault Banner](https://img.shields.io/badge/AI-Powered-purple?style=for-the-badge) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-blue?style=for-the-badge) ![MERN Stack](https://img.shields.io/badge/Stack-PERN-green?style=for-the-badge)
 
 ---
 
@@ -20,7 +20,7 @@ As you type a new note, a smart sidebar automatically shows similar past notes, 
 The AI automatically suggests relevant tags (e.g., #Travel, #Health, #Ideas) based on your note's content.
 
 ### 4. **Vector-Powered Intelligence**
-Each note is converted into a 1536-dimensional vector using OpenAI's embedding model, enabling mathematical similarity comparisons.
+Each note is converted into a 768-dimensional vector using Google Gemini's embedding model, enabling mathematical similarity comparisons.
 
 ---
 
@@ -29,16 +29,16 @@ Each note is converted into a 1536-dimensional vector using OpenAI's embedding m
 ### **Tech Stack**
 - **Frontend**: React + Vite + TailwindCSS
 - **Backend**: Node.js + Express
-- **Database**: MongoDB Atlas with Vector Search
-- **AI**: OpenAI Embeddings API (text-embedding-3-small)
+- **Database**: PostgreSQL with pgvector extension
+- **AI**: Google Gemini (embedding-001 + gemini-pro)
 
 ### **How It Works**
 
 ```
-User writes note → OpenAI generates embedding vector → 
-Stored in MongoDB with Vector Index → 
+User writes note → Gemini generates embedding vector → 
+Stored in PostgreSQL with vector column → 
 User searches → Query vectorized → 
-$vectorSearch finds similar notes by cosine similarity
+pgvector finds similar notes by cosine similarity
 ```
 
 ---
@@ -47,8 +47,8 @@ $vectorSearch finds similar notes by cosine similarity
 
 ### Prerequisites
 - Node.js 18+ 
-- MongoDB Atlas account (free tier works!)
-- OpenAI API key
+- PostgreSQL 15+ with pgvector extension
+- Google Gemini API key (FREE!)
 
 ### 1. Clone the Repository
 
@@ -65,48 +65,49 @@ npm run install:all
 
 This installs dependencies for the root, server, and client.
 
-### 3. Set Up MongoDB Atlas
+### 3. Set Up PostgreSQL with pgvector
 
-1. Create a free cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Create a database called `mindvault`
-3. Create a collection called `notes`
-4. **Create a Vector Search Index**:
-   - Go to "Atlas Search" tab
-   - Click "Create Search Index" → "JSON Editor"
-   - Select `mindvault.notes` collection
-   - Name it `vector_index`
-   - Use this definition:
+Follow the detailed guide in [POSTGRESQL_SETUP.md](POSTGRESQL_SETUP.md)
 
-```json
-{
-  "fields": [
-    {
-      "type": "vector",
-      "path": "embedding",
-      "numDimensions": 1536,
-      "similarity": "cosine"
-    }
-  ]
-}
+**Quick Start with Docker:**
+
+```bash
+docker run -d \
+  --name mindvault-postgres \
+  -e POSTGRES_DB=mindvault \
+  -e POSTGRES_USER=mindvault_user \
+  -e POSTGRES_PASSWORD=your_password \
+  -p 5432:5432 \
+  pgvector/pgvector:pg15
 ```
 
-5. Get your connection string and add it to `.env`
+### 4. Initialize Database
 
-### 4. Configure Environment Variables
+```bash
+cd server
+npm run init:db
+```
+
+This creates the notes table with vector column and indexes.
+
+### 5. Configure Environment Variables
 
 Create `server/.env`:
 
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/mindvault?retryWrites=true&w=majority
-OPENAI_API_KEY=sk-your-openai-api-key
+DATABASE_URL=postgresql://mindvault_user:your_password@localhost:5432/mindvault
+GEMINI_API_KEY=your_gemini_api_key_here
 PORT=5000
-DB_NAME=mindvault
-COLLECTION_NAME=notes
 ```
 
-### 5. Run the Application
+**Get FREE Gemini API Key:**
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Click "Create API Key"
+3. Copy to `.env` file
 
-**Development mode (with hot reload):**
+Free tier: 60 requests/min, 1500/day - perfect for personal use!
+
+### 6. Run the Application
 
 ```bash
 npm run dev
@@ -115,16 +116,6 @@ npm run dev
 This starts:
 - Backend API on `http://localhost:5000`
 - React frontend on `http://localhost:3000`
-
-**Or run separately:**
-
-```bash
-# Terminal 1 - Backend
-npm run server
-
-# Terminal 2 - Frontend
-npm run client
-```
 
 ---
 
@@ -192,56 +183,37 @@ curl -X POST http://localhost:5000/api/notes \
 
 ### 1. Vector Embeddings
 
-Each note is converted to a 1536-dimensional vector using OpenAI's `text-embedding-3-small` model:
+Each note is converted to a 768-dimensional vector using Google Gemini's `text-embedding-004` model:
 
 ```javascript
-const embedding = await openai.embeddings.create({
-  model: 'text-embedding-3-small',
-  input: `${title} ${content}`,
-});
+const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+const result = await model.embedContent(`${title} ${content}`);
+const embedding = result.embedding.values;
 ```
 
-### 2. MongoDB Vector Search
+### 2. PostgreSQL Vector Search
 
-Uses the `$vectorSearch` aggregation pipeline:
+Uses pgvector with cosine distance for similarity:
 
-```javascript
-const pipeline = [
-  {
-    $vectorSearch: {
-      index: 'vector_index',
-      path: 'embedding',
-      queryVector: queryEmbedding,
-      numCandidates: 100,
-      limit: 10,
-    },
-  },
-  {
-    $project: {
-      title: 1,
-      content: 1,
-      tags: 1,
-      score: { $meta: 'vectorSearchScore' },
-    },
-  },
-];
+```sql
+SELECT 
+  id, title, content, tags,
+  1 - (embedding <=> $1) as score
+FROM notes
+ORDER BY embedding <=> $1
+LIMIT 10;
 ```
+
+The `<=>` operator calculates cosine distance. Lower distance = more similar.
 
 ### 3. AI Categorization
 
-Uses GPT-3.5 to suggest tags:
+Uses Gemini Pro to suggest tags:
 
 ```javascript
-const response = await openai.chat.completions.create({
-  model: 'gpt-3.5-turbo',
-  messages: [
-    {
-      role: 'system',
-      content: 'Suggest 1-3 tags from: Travel, Health, Work...',
-    },
-    { role: 'user', content: noteContent },
-  ],
-});
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const result = await model.generateContent(`Categorize this note: "${content}"`);
+const tags = JSON.parse(result.response.text());
 ```
 
 ---
@@ -296,17 +268,32 @@ mindvault-semanticlinking/
 
 ## 🐛 Troubleshooting
 
-### Vector Search Not Working
+### pgvector Extension Not Found
 
-**Error**: `$vectorSearch is not supported`
+**Error**: `extension "vector" does not exist`
 
-**Solution**: Ensure you've created the Vector Search Index in MongoDB Atlas (not a regular index).
+**Solution**: Install pgvector and enable it:
+```bash
+# Connect to database
+psql -d mindvault
+# Enable extension
+CREATE EXTENSION vector;
+```
 
-### OpenAI API Errors
+### Gemini API Errors
 
 **Error**: `Invalid API key`
 
-**Solution**: Check your `.env` file and ensure `OPENAI_API_KEY` is set correctly.
+**Solution**: Check your `.env` file and ensure `GEMINI_API_KEY` is set correctly. Get a free key at [Google AI Studio](https://makersuite.google.com/app/apikey).
+
+### Database Connection Failed
+
+**Issue**: Cannot connect to PostgreSQL
+
+**Solution**: 
+1. Ensure PostgreSQL is running: `sudo systemctl status postgresql`
+2. Check connection settings in `.env`
+3. Verify user permissions: `GRANT ALL ON DATABASE mindvault TO mindvault_user;`
 
 ### No Related Notes Showing
 
@@ -314,8 +301,8 @@ mindvault-semanticlinking/
 
 **Solution**: 
 1. Ensure you have at least 2-3 notes created
-2. Check that the vector index is active in Atlas
-3. Verify embeddings are being generated (check MongoDB documents)
+2. Check that pgvector index exists: `\d notes` in psql
+3. Verify embeddings are being generated (check notes table)
 
 ---
 
@@ -350,13 +337,32 @@ Contributions are welcome! Feel free to:
 
 ---
 
-## 💡 Use Cases
+## � Cost Estimates
 
-- **Personal Knowledge Management**: Build a searchable second brain
-- **Research Notes**: Connect research across different topics
-- **Journal Entries**: Find patterns in your thoughts over time
-- **Meeting Notes**: Recall discussions by topic, not date
-- **Learning**: Connect concepts across courses
+### PostgreSQL Hosting (Choose One)
+
+| Option | Cost | Storage | Best For |
+|--------|------|---------|----------|
+| **Local/Docker** | FREE | Unlimited | Development |
+| **Supabase** | FREE tier: 500MB | 500MB | Small projects |
+| **Neon** | FREE tier: 3GB | 3GB | Serverless apps |
+| **DigitalOcean** | $15/month | 10GB | Production |
+| **AWS RDS** | ~$15-30/month | Varies | Enterprise |
+
+### Google Gemini API (FREE!)
+
+- **Embedding** (text-embedding-004): FREE
+- **Text Generation** (gemini-pro): FREE
+- **Rate Limits**: 60 requests/min, 1500/day
+- **Perfect for**: Personal use, small teams
+
+### Total Cost Examples
+
+- **Personal Use** (Local PostgreSQL + Gemini): **$0/month** 🎉
+- **Small Team** (Supabase + Gemini): **$0/month** (up to 500MB)
+- **Production** (DigitalOcean + Gemini): **~$15/month**
+
+Compare to MongoDB Atlas + OpenAI: ~$20-50/month minimum
 
 ---
 

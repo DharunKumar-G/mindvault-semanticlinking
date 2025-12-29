@@ -1,11 +1,9 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Predefined categories for auto-categorization
 const AVAILABLE_TAGS = [
@@ -30,50 +28,44 @@ const AVAILABLE_TAGS = [
 ];
 
 /**
- * Auto-categorize a note based on its content using AI
+ * Auto-categorize a note based on its content using Gemini AI
  * @param {string} content - The note content to categorize
  * @returns {Promise<string[]>} - Array of suggested tags
  */
 export async function categorizeNote(content) {
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a note categorization assistant. Given a note, suggest 1-3 relevant tags from this list: ${AVAILABLE_TAGS.join(', ')}. 
-          
-          Return ONLY a JSON array of tag strings, nothing else. Example: ["Travel", "Memories"]
-          
-          If none fit well, return an empty array: []`
-        },
-        {
-          role: 'user',
-          content: `Categorize this note: "${content}"`
-        }
-      ],
-      temperature: 0.3,
-      max_tokens: 100,
-    });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `You are a note categorization assistant. Given a note, suggest 1-3 relevant tags from this list: ${AVAILABLE_TAGS.join(', ')}.
 
-    const result = response.choices[0].message.content.trim();
+Return ONLY a JSON array of tag strings, nothing else. Example: ["Travel", "Memories"]
+
+If none fit well, return an empty array: []
+
+Note to categorize: "${content}"`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
     
     try {
-      const tags = JSON.parse(result);
+      // Remove markdown code blocks if present
+      const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+      const tags = JSON.parse(cleanText);
       // Filter to only include valid tags
       return tags.filter(tag => AVAILABLE_TAGS.includes(tag));
     } catch {
-      console.warn('Failed to parse tags response:', result);
+      console.warn('Failed to parse tags response:', text);
       return [];
     }
   } catch (error) {
-    console.error('Error categorizing note:', error);
+    console.error('Error categorizing note with Gemini:', error);
     return [];
   }
 }
 
 /**
- * Generate a brief summary of a note
+ * Generate a brief summary of a note using Gemini
  * @param {string} content - The note content
  * @returns {Promise<string>} - Brief summary
  */
@@ -83,25 +75,15 @@ export async function generateSummary(content) {
       return content;
     }
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'Generate a brief 1-sentence summary of the following note. Be concise.'
-        },
-        {
-          role: 'user',
-          content: content
-        }
-      ],
-      temperature: 0.3,
-      max_tokens: 50,
-    });
-
-    return response.choices[0].message.content.trim();
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `Generate a brief 1-sentence summary of the following note. Be concise.\n\n${content}`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim();
   } catch (error) {
-    console.error('Error generating summary:', error);
+    console.error('Error generating summary with Gemini:', error);
     return content.substring(0, 100) + '...';
   }
 }

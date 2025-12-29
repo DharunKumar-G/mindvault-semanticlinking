@@ -1,19 +1,14 @@
-import { getDatabase } from '../config/database.js';
+import pool from '../config/database.js';
 import { generateEmbedding } from './embeddingService.js';
 import { categorizeNote } from './categorizationService.js';
-
-const COLLECTION_NAME = process.env.COLLECTION_NAME || 'notes';
-const VECTOR_INDEX_NAME = 'vector_index';
+import pgvector from 'pgvector/pg';
 
 /**
  * Create a new note with embedding
- * @param {Object} noteData - Note data { title, content }
+ * @param {Object} noteData - Note data { title, content, tags }
  * @returns {Promise<Object>} - Created note
  */
 export async function createNote(noteData) {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-
   const { title, content, tags: providedTags } = noteData;
   
   // Generate embedding for the note content
@@ -26,25 +21,16 @@ export async function createNote(noteData) {
     tags = await categorizeNote(content);
   }
 
-  const note = {
-    title,
-    content,
-    tags,
-    embedding,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const result = await collection.insertOne(note);
+  const query = `
+    INSERT INTO notes (title, content, tags, embedding, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    RETURNING id, title, content, tags, created_at, updated_at
+  `;
   
-  return {
-    _id: result.insertedId,
-    title,
-    content,
-    tags,
-    createdAt: note.createdAt,
-    updatedAt: note.updatedAt,
-  };
+  const values = [title, content, tags, pgvector.toSql(embedding)];
+  const result = await pool.query(query, values);
+  
+  return result.rows[0];
 }
 
 /**
@@ -52,15 +38,14 @@ export async function createNote(noteData) {
  * @returns {Promise<Array>} - Array of notes
  */
 export async function getAllNotes() {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-
-  const notes = await collection
-    .find({}, { projection: { embedding: 0 } })
-    .sort({ createdAt: -1 })
-    .toArray();
-
-  return notes;
+  const query = `
+    SELECT id, title, content, tags, created_at, updated_at
+    FROM notes
+    ORDER BY created_at DESC
+  `;
+  
+  const result = await pool.query(query);
+  return result.rows;
 }
 
 /**
@@ -69,16 +54,14 @@ export async function getAllNotes() {
  * @returns {Promise<Object>} - Note object
  */
 export async function getNoteById(id) {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-  const { ObjectId } = await import('mongodb');
-
-  const note = await collection.findOne(
-    { _id: new ObjectId(id) },
-    { projection: { embedding: 0 } }
-  );
-
-  return note;
+  const query = `
+    SELECT id, title, content, tags, created_at, updated_at
+    FROM notes
+    WHERE id = $1
+  `;
+  
+  const result = await pool.query(query, [id]);
+  return result.rows[0];
 }
 
 /**
@@ -88,31 +71,23 @@ export async function getNoteById(id) {
  * @returns {Promise<Object>} - Updated note
  */
 export async function updateNote(id, updateData) {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-  const { ObjectId } = await import('mongodb');
-
   const { title, content, tags } = updateData;
   
   // Regenerate embedding if content or title changed
   const textToEmbed = `${title} ${content}`;
   const embedding = await generateEmbedding(textToEmbed);
 
-  const result = await collection.findOneAndUpdate(
-    { _id: new ObjectId(id) },
-    {
-      $set: {
-        title,
-        content,
-        tags,
-        embedding,
-        updatedAt: new Date(),
-      },
-    },
-    { returnDocument: 'after', projection: { embedding: 0 } }
-  );
-
-  return result;
+  const query = `
+    UPDATE notes
+    SET title = $1, content = $2, tags = $3, embedding = $4, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $5
+    RETURNING id, title, content, tags, created_at, updated_at
+  `;
+  
+  const values = [title, content, tags, pgvector.toSql(embedding), id];
+  const result = await pool.query(query, values);
+  
+  return result.rows[0];
 }
 
 /**
@@ -121,53 +96,42 @@ export async function updateNote(id, updateData) {
  * @returns {Promise<boolean>} - Success status
  */
 export async function deleteNote(id) {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-  const { ObjectId } = await import('mongodb');
-
-  const result = await collection.deleteOne({ _id: new ObjectId(id) });
-  return result.deletedCount > 0;
+  const query = 'DELETE FROM notes WHERE id = $1';
+  const result = await pool.query(query, [id]);
+  return result.rowCount > 0;
 }
 
 /**
- * Semantic search for notes using MongoDB Atlas Vector Search
+ * Semantic search for notes using PostgreSQL pgvector
  * @param {string} query - Search query
  * @param {number} limit - Number of results to return
  * @returns {Promise<Array>} - Array of matching notes with scores
  */
-export async function semanticSearch(query, limit = 10) {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-
+export async function semanticSearch(searchQuery, limit = 10) {
   // Generate embedding for the search query
-  const queryEmbedding = await generateEmbedding(query);
+  const queryEmbedding = await generateEmbedding(searchQuery);
 
-  // Use MongoDB Atlas Vector Search ($vectorSearch aggregation)
-  const pipeline = [
-    {
-      $vectorSearch: {
-        index: VECTOR_INDEX_NAME,
-        path: 'embedding',
-        queryVector: queryEmbedding,
-        numCandidates: limit * 10, // Consider more candidates for better results
-        limit: limit,
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        content: 1,
-        tags: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        score: { $meta: 'vectorSearchScore' },
-      },
-    },
-  ];
-
-  const results = await collection.aggregate(pipeline).toArray();
-  return results;
+  // Use pgvector's cosine distance operator (<=>)
+  // Lower distance = more similar
+  const query = `
+    SELECT 
+      id, 
+      title, 
+      content, 
+      tags, 
+      created_at, 
+      updated_at,
+      1 - (embedding <=> $1) as score
+    FROM notes
+    WHERE embedding IS NOT NULL
+    ORDER BY embedding <=> $1
+    LIMIT $2
+  `;
+  
+  const values = [pgvector.toSql(queryEmbedding), limit];
+  const result = await pool.query(query, values);
+  
+  return result.rows;
 }
 
 /**
@@ -177,50 +141,35 @@ export async function semanticSearch(query, limit = 10) {
  * @returns {Promise<Array>} - Array of related notes
  */
 export async function findRelatedNotes(noteId, limit = 5) {
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-  const { ObjectId } = await import('mongodb');
-
   // Get the note's embedding
-  const note = await collection.findOne({ _id: new ObjectId(noteId) });
+  const noteQuery = 'SELECT embedding FROM notes WHERE id = $1';
+  const noteResult = await pool.query(noteQuery, [noteId]);
   
-  if (!note || !note.embedding) {
+  if (noteResult.rows.length === 0 || !noteResult.rows[0].embedding) {
     return [];
   }
 
-  // Use vector search to find similar notes
-  const pipeline = [
-    {
-      $vectorSearch: {
-        index: VECTOR_INDEX_NAME,
-        path: 'embedding',
-        queryVector: note.embedding,
-        numCandidates: (limit + 1) * 10,
-        limit: limit + 1, // +1 to exclude the note itself
-      },
-    },
-    {
-      $match: {
-        _id: { $ne: new ObjectId(noteId) }, // Exclude the current note
-      },
-    },
-    {
-      $limit: limit,
-    },
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        content: 1,
-        tags: 1,
-        createdAt: 1,
-        score: { $meta: 'vectorSearchScore' },
-      },
-    },
-  ];
+  const embedding = noteResult.rows[0].embedding;
 
-  const results = await collection.aggregate(pipeline).toArray();
-  return results;
+  // Find similar notes using vector similarity
+  const query = `
+    SELECT 
+      id, 
+      title, 
+      content, 
+      tags, 
+      created_at,
+      1 - (embedding <=> $1) as score
+    FROM notes
+    WHERE id != $2 AND embedding IS NOT NULL
+    ORDER BY embedding <=> $1
+    LIMIT $3
+  `;
+  
+  const values = [pgvector.toSql(embedding), noteId, limit];
+  const result = await pool.query(query, values);
+  
+  return result.rows;
 }
 
 /**
@@ -234,35 +183,26 @@ export async function findRelatedByContent(text, limit = 5) {
     return [];
   }
 
-  const db = await getDatabase();
-  const collection = db.collection(COLLECTION_NAME);
-
   // Generate embedding for the text
   const textEmbedding = await generateEmbedding(text);
 
-  // Use vector search to find similar notes
-  const pipeline = [
-    {
-      $vectorSearch: {
-        index: VECTOR_INDEX_NAME,
-        path: 'embedding',
-        queryVector: textEmbedding,
-        numCandidates: limit * 10,
-        limit: limit,
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        title: 1,
-        content: 1,
-        tags: 1,
-        createdAt: 1,
-        score: { $meta: 'vectorSearchScore' },
-      },
-    },
-  ];
-
-  const results = await collection.aggregate(pipeline).toArray();
-  return results;
+  // Find similar notes using vector similarity
+  const query = `
+    SELECT 
+      id, 
+      title, 
+      content, 
+      tags, 
+      created_at,
+      1 - (embedding <=> $1) as score
+    FROM notes
+    WHERE embedding IS NOT NULL
+    ORDER BY embedding <=> $1
+    LIMIT $2
+  `;
+  
+  const values = [pgvector.toSql(textEmbedding), limit];
+  const result = await pool.query(query, values);
+  
+  return result.rows;
 }
