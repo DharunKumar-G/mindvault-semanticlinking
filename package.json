@@ -1,7 +1,7 @@
 {
   "name": "mindvault-semanticlinking",
   "version": "1.0.0",
-  "description": "MindVault - Semantic Personal Notes with MongoDB Atlas Vector Search",
+  "description": "MindVault - Semantic Personal Notes with PostgreSQL pgvector & Google Gemini",
   "private": true,
   "workspaces": [
     "client",
@@ -12,19 +12,25 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
-    "build": "cd client && npm run build"
+    "build": "cd client && npm run build",
+    "init:db": "cd server && npm run init:db",
+    "clean": "rm -rf node_modules client/node_modules server/node_modules",
+    "clean:install": "npm run clean && npm run install:all"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
   "keywords": [
-    "mongodb",
+    "postgresql",
+    "pgvector",
     "vector-search",
     "semantic-search",
     "notes",
     "ai",
-    "embeddings"
+    "embeddings",
+    "gemini",
+    "second-brain"
   ],
-  "author": "",
+  "author": "Dharun Kumar G",
   "license": "MIT"
 }

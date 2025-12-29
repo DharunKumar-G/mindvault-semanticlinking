@@ -24,10 +24,20 @@ lerna-debug.log*
 build/
 coverage/
 .cache/
+*.tsbuildinfo
 
 # Database
 *.db
 *.sqlite
+
+# OS
+Thumbs.db
+.directory
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
 
 # OS
 Thumbs.db
