@@ -4,7 +4,11 @@
 
 MindVault is a second-brain application that understands the *intent* and *context* of your thoughts, not just keywords. It uses AI-powered embeddings and vector search to connect related ideas, even when they share zero overlapping words.
 
-![MindVault Banner](https://img.shields.io/badge/AI-Powered-purple?style=for-the-badge) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-blue?style=for-the-badge) ![MERN Stack](https://img.shields.io/badge/Stack-PERN-green?style=for-the-badge)
+[![CI](https://github.com/DharunKumar-G/mindvault-semanticlinking/actions/workflows/ci.yml/badge.svg)](https://github.com/DharunKumar-G/mindvault-semanticlinking/actions/workflows/ci.yml)
+![MindVault Banner](https://img.shields.io/badge/AI-Powered-purple?style=for-the-badge) 
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-blue?style=for-the-badge) 
+![Stack](https://img.shields.io/badge/Stack-PERN-green?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
 ---
 
