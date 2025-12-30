@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import pool from './config/database.js';
 import notesRouter from './routes/notes.js';
+import collectionsRouter from './routes/collections.js';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/notes', notesRouter);
+app.use('/api/collections', collectionsRouter);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

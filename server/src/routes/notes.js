@@ -9,7 +9,7 @@ import {
   findRelatedNotes,
   findRelatedByContent,
 } from '../services/noteService.js';
-import { categorizeNote, summarizeNote } from '../services/categorizationService.js';
+import { categorizeNote, summarizeNote, answerQuestion } from '../services/categorizationService.js';
 import { AVAILABLE_TAGS } from '../services/categorizationService.js';
 
 const router = express.Router();
@@ -217,6 +217,27 @@ router.post('/writing-suggestions', async (req, res) => {
   } catch (error) {
     console.error('Error getting writing suggestions:', error);
     res.status(500).json({ error: 'Failed to get writing suggestions' });
+  }
+});
+
+// POST /api/notes/ask - Ask a question and get an AI answer based on notes
+router.post('/ask', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+
+    // Use semantic search to find relevant notes
+    const relevantNotes = await semanticSearch(question, 5);
+    
+    // Get AI answer based on those notes
+    const result = await answerQuestion(question, relevantNotes);
+    res.json(result);
+  } catch (error) {
+    console.error('Error answering question:', error);
+    res.status(500).json({ error: 'Failed to answer question' });
   }
 });
 

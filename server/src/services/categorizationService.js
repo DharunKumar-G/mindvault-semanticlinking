@@ -171,4 +171,62 @@ Keep each suggestion under 80 characters. Focus on the most impactful improvemen
   }
 }
 
+/**
+ * Answer a question based on provided note content using AI
+ * @param {string} question - The question to answer
+ * @param {Array} relevantNotes - Array of relevant note objects with title and content
+ * @returns {Promise<Object>} - Answer object with answer text and sources
+ */
+export async function answerQuestion(question, relevantNotes) {
+  try {
+    if (!question || relevantNotes.length === 0) {
+      return {
+        answer: "I don't have enough information to answer that question. Try adding more notes or rephrasing your question.",
+        sources: []
+      };
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    // Prepare context from notes
+    const context = relevantNotes.map((note, idx) => 
+      `[Note ${idx + 1}: "${note.title}"]\n${note.content}`
+    ).join('\n\n---\n\n');
+
+    const prompt = `You are a helpful assistant that answers questions based on the user's notes.
+
+Question: ${question}
+
+Relevant notes from the user's knowledge base:
+
+${context}
+
+Please provide a clear, concise answer based ONLY on the information in these notes. If the notes don't contain enough information to answer the question, say so. Cite which notes you used by referencing their numbers (e.g., "According to Note 1...").
+
+Answer:`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const answer = response.text().trim();
+    
+    // Extract note references to provide sources
+    const sources = relevantNotes.map((note, idx) => ({
+      id: note.id,
+      title: note.title,
+      noteNumber: idx + 1
+    }));
+
+    return {
+      answer,
+      sources
+    };
+  } catch (error) {
+    console.error('Error answering question with Gemini:', error);
+    return {
+      answer: "Sorry, I encountered an error while processing your question. Please try again.",
+      sources: []
+    };
+  }
+}
+
 export { AVAILABLE_TAGS };

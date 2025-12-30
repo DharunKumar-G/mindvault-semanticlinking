@@ -101,4 +101,52 @@ export const notesApi = {
   },
 };
 
+// Collections API
+export const collectionsApi = {
+  // Get all collections
+  getAll: async () => {
+    const response = await api.get('/collections');
+    return response.data;
+  },
+
+  // Get a collection by ID with its notes
+  getById: async (id) => {
+    const response = await api.get(`/collections/${id}`);
+    return response.data;
+  },
+
+  // Create a new collection
+  create: async (data) => {
+    const response = await api.post('/collections', data);
+    return response.data;
+  },
+
+  // Update a collection
+  update: async (id, data) => {
+    const response = await api.put(`/collections/${id}`, data);
+    return response.data;
+  },
+
+  // Delete a collection
+  delete: async (id) => {
+    const response = await api.delete(`/collections/${id}`);
+    return response.data;
+  },
+
+  // Move a note to a collection
+  moveNote: async (collectionId, noteId) => {
+    const response = await api.post(`/collections/${collectionId}/move-note`, { noteId });
+    return response.data;
+  },
+};
+
+// AI API
+export const aiApi = {
+  // Ask a question about notes
+  askQuestion: async (question) => {
+    const response = await api.post('/notes/ask', { question });
+    return response.data;
+  },
+};
+
 export default api;

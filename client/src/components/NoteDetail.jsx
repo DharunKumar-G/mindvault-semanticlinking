@@ -5,6 +5,7 @@ import { notesApi } from '../services/api';
 import { formatDate, getTagClassName } from '../utils/debounce';
 import RelatedNotes from './RelatedNotes';
 import ShareModal from './ShareModal';
+import AutoLinkedContent from './AutoLinkedContent';
 
 export default function NoteDetail({ onNoteChange }) {
   const { id } = useParams();
@@ -17,6 +18,7 @@ export default function NoteDetail({ onNoteChange }) {
   const [showSummary, setShowSummary] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [error, setError] = useState(null);
+  const [relatedNotes, setRelatedNotes] = useState([]);
 
   useEffect(() => {
     loadNote();
@@ -28,6 +30,10 @@ export default function NoteDetail({ onNoteChange }) {
       setError(null);
       const data = await notesApi.getById(id);
       setNote(data);
+      
+      // Load related notes for auto-linking
+      const related = await notesApi.getRelated(id, 10);
+      setRelatedNotes(related);
     } catch (err) {
       console.error('Error loading note:', err);
       setError('Failed to load note');
@@ -243,9 +249,11 @@ export default function NoteDetail({ onNoteChange }) {
 
             {/* Note Content */}
             <div className="prose max-w-none">
-              <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed whitespace-pre-wrap">
-                {note.content}
-              </p>
+              <AutoLinkedContent 
+                content={note.content}
+                currentNoteId={id}
+                relatedNotes={relatedNotes}
+              />
             </div>
           </div>
         </div>

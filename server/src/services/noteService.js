@@ -24,7 +24,7 @@ export async function createNote(noteData) {
   const query = `
     INSERT INTO notes (title, content, tags, embedding, created_at, updated_at)
     VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    RETURNING id, title, content, tags, created_at, updated_at
+    RETURNING id, title, content, tags, collection_id, created_at, updated_at
   `;
   
   const values = [title, content, tags, pgvector.toSql(embedding)];
@@ -39,7 +39,7 @@ export async function createNote(noteData) {
  */
 export async function getAllNotes() {
   const query = `
-    SELECT id, title, content, tags, created_at, updated_at
+    SELECT id, title, content, tags, collection_id, created_at, updated_at
     FROM notes
     ORDER BY created_at DESC
   `;
@@ -55,7 +55,7 @@ export async function getAllNotes() {
  */
 export async function getNoteById(id) {
   const query = `
-    SELECT id, title, content, tags, created_at, updated_at
+    SELECT id, title, content, tags, collection_id, created_at, updated_at
     FROM notes
     WHERE id = $1
   `;
@@ -81,7 +81,7 @@ export async function updateNote(id, updateData) {
     UPDATE notes
     SET title = $1, content = $2, tags = $3, embedding = $4, updated_at = CURRENT_TIMESTAMP
     WHERE id = $5
-    RETURNING id, title, content, tags, created_at, updated_at
+    RETURNING id, title, content, tags, collection_id, created_at, updated_at
   `;
   
   const values = [title, content, tags, pgvector.toSql(embedding), id];

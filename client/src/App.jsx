@@ -8,6 +8,7 @@ import NoteEditor from './components/NoteEditor';
 import SearchResults from './components/SearchResults';
 import NoteDetail from './components/NoteDetail';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
+import AskQuestion from './components/AskQuestion';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,15 +122,8 @@ function AppContent() {
           </Routes>
         </main>
 
-        {/* Help button */}
-        <button
-          onClick={() => setShowShortcuts(true)}
-          className="fixed bottom-6 right-6 p-3 bg-vault-600 dark:bg-vault-500 text-white rounded-full 
-                   shadow-lg hover:bg-vault-700 dark:hover:bg-vault-600 transition-colors"
-          title="Keyboard shortcuts (Ctrl+/)"
-        >
-          <span className="text-lg">?</span>
-        </button>
+        {/* AI Question Assistant */}
+        <AskQuestion />
       </div>
 
       <KeyboardShortcutsModal 

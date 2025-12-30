@@ -203,7 +203,7 @@ Looking for something to work on? Here are some ideas:
 - [x] Note templates
 
 ### Medium
-- [ ] Note folders/collections
+- [x] Note folders/collections
 - [ ] Multi-user support with authentication
 - [ ] Rich text editor (formatting, images)
 - [x] Advanced filtering by date/tags
@@ -219,8 +219,8 @@ Looking for something to work on? Here are some ideas:
 
 ### AI Enhancements
 - [x] Smart note summarization
-- [ ] Question answering from notes
-- [ ] Auto-linking related concepts
+- [x] Question answering from notes
+- [x] Auto-linking related concepts
 - [x] Content suggestions while writing
 - [x] Duplicate detection
 
