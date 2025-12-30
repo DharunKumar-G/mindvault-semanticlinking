@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Save, X, Loader, Sparkles, Tag as TagIcon } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { debounce } from '../utils/debounce';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import RelatedNotesLive from './RelatedNotesLive';
 
 export default function NoteEditor({ onSave }) {
@@ -87,7 +88,7 @@ export default function NoteEditor({ onSave }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
 
     if (!title.trim() || !content.trim()) {
       alert('Title and content are required');
@@ -117,6 +118,22 @@ export default function NoteEditor({ onSave }) {
   const handleCancel = () => {
     navigate('/');
   };
+
+  // Keyboard shortcut for saving
+  useKeyboardShortcuts([
+    {
+      key: 's',
+      ctrl: true,
+      meta: true,
+      callback: (e) => {
+        e.preventDefault();
+        if (!saving) {
+          handleSubmit();
+        }
+      },
+      allowInInput: true
+    }
+  ]);
 
   if (loading) {
     return (

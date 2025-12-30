@@ -111,3 +111,24 @@ body {
 .tag-nature { @apply bg-lime-100 text-lime-800; }
 .tag-gratitude { @apply bg-sky-100 text-sky-800; }
 .tag-reflection { @apply bg-slate-100 text-slate-800; }
+
+/* Dark mode tag styles */
+.dark .tag-travel { @apply bg-blue-900 text-blue-200; }
+.dark .tag-health { @apply bg-green-900 text-green-200; }
+.dark .tag-work { @apply bg-orange-900 text-orange-200; }
+.dark .tag-personal { @apply bg-pink-900 text-pink-200; }
+.dark .tag-ideas { @apply bg-yellow-900 text-yellow-200; }
+.dark .tag-learning { @apply bg-indigo-900 text-indigo-200; }
+.dark .tag-goals { @apply bg-red-900 text-red-200; }
+.dark .tag-memories { @apply bg-purple-900 text-purple-200; }
+.dark .tag-finance { @apply bg-emerald-900 text-emerald-200; }
+.dark .tag-relationships { @apply bg-rose-900 text-rose-200; }
+.dark .tag-creativity { @apply bg-fuchsia-900 text-fuchsia-200; }
+.dark .tag-wellness { @apply bg-teal-900 text-teal-200; }
+.dark .tag-technology { @apply bg-cyan-900 text-cyan-200; }
+.dark .tag-food { @apply bg-amber-900 text-amber-200; }
+.dark .tag-entertainment { @apply bg-violet-900 text-violet-200; }
+.dark .tag-nature { @apply bg-lime-900 text-lime-200; }
+.dark .tag-gratitude { @apply bg-sky-900 text-sky-200; }
+.dark .tag-reflection { @apply bg-slate-700 text-slate-200; }
+

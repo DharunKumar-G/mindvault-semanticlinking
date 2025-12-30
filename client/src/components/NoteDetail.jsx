@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Edit, Trash2, Clock, Tag as TagIcon, Loader, ArrowLeft, Sparkles } from 'lucide-react';
+import { Edit, Trash2, Clock, Tag as TagIcon, Loader, ArrowLeft, Sparkles, Download } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { formatDate, getTagClassName } from '../utils/debounce';
 import RelatedNotes from './RelatedNotes';
@@ -49,6 +49,36 @@ export default function NoteDetail({ onNoteChange }) {
     }
   };
 
+  const handleExportMarkdown = () => {
+    if (!note) return;
+
+    // Create markdown content
+    let markdown = `# ${note.title}\n\n`;
+    
+    if (note.tags && note.tags.length > 0) {
+      markdown += `**Tags:** ${note.tags.map(tag => `#${tag}`).join(', ')}\n\n`;
+    }
+    
+    markdown += `**Created:** ${formatDate(note.createdAt)}\n`;
+    
+    if (note.updatedAt !== note.createdAt) {
+      markdown += `**Updated:** ${formatDate(note.updatedAt)}\n`;
+    }
+    
+    markdown += `\n---\n\n${note.content}\n`;
+
+    // Create blob and download
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${note.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -87,6 +117,15 @@ export default function NoteDetail({ onNoteChange }) {
                 <span className="text-sm">Back</span>
               </Link>
               <div className="flex gap-2">
+                <button
+                  onClick={handleExportMarkdown}
+                  className="flex items-center gap-2 px-4 py-2 bg-white text-slate-600 
+                           border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  title="Export to Markdown"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
                 <Link
                   to={`/edit/${id}`}
                   className="flex items-center gap-2 px-4 py-2 bg-white text-vault-600 

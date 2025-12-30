@@ -196,10 +196,10 @@ try {
 Looking for something to work on? Here are some ideas:
 
 ### Easy (Good First Issues)
-- [ ] Add dark mode toggle
-- [ ] Export notes to Markdown
+- [x] Add dark mode toggle
+- [x] Export notes to Markdown
+- [x] Keyboard shortcuts
 - [ ] Note sharing links
-- [ ] Keyboard shortcuts
 - [ ] Note templates
 
 ### Medium

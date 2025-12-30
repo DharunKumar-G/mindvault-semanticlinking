@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: mindvault-postgres
+    environment:
+      POSTGRES_USER: mindvault
+      POSTGRES_PASSWORD: mindvault_dev
+      POSTGRES_DB: mindvault
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/src/config/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mindvault"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: mindvault-server
+    ports:
+      - "5001:5001"
+    environment:
+      DATABASE_URL: postgresql://mindvault:mindvault_dev@postgres:5432/mindvault
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      PORT: 5001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    command: npm run dev
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: mindvault-client
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: npm run dev
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Calendar, Tag, Trash2, Loader2 } from 'lucide-react';
+import { FileText, Calendar, Tag, Trash2, Loader2, Download } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { formatDate, truncateText, getTagClassName } from '../utils/debounce';
 
@@ -47,11 +47,42 @@ export default function NotesList({ onNoteChange }) {
     }
   };
 
+  const handleExportAll = () => {
+    if (notes.length === 0) return;
+
+    let markdown = `# MindVault Notes Export\n\n`;
+    markdown += `Exported on: ${new Date().toLocaleDateString()}\n`;
+    markdown += `Total Notes: ${notes.length}\n\n`;
+    markdown += `---\n\n`;
+
+    notes.forEach((note, index) => {
+      markdown += `## ${index + 1}. ${note.title}\n\n`;
+      
+      if (note.tags && note.tags.length > 0) {
+        markdown += `**Tags:** ${note.tags.map(tag => `#${tag}`).join(', ')}\n\n`;
+      }
+      
+      markdown += `**Created:** ${formatDate(note.createdAt)}\n\n`;
+      markdown += `${note.content}\n\n`;
+      markdown += `---\n\n`;
+    });
+
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mindvault_notes_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-vault-600" />
-        <span className="ml-3 text-slate-600">Loading your notes...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-vault-600 dark:text-vault-400" />
+        <span className="ml-3 text-slate-600 dark:text-slate-300">Loading your notes...</span>
       </div>
     );
   }
@@ -59,10 +90,10 @@ export default function NotesList({ onNoteChange }) {
   if (error) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-600 mb-4">{error}</p>
+        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
         <button 
           onClick={fetchNotes}
-          className="px-4 py-2 bg-vault-600 text-white rounded-lg hover:bg-vault-700"
+          className="px-4 py-2 bg-vault-600 dark:bg-vault-500 text-white rounded-lg hover:bg-vault-700 dark:hover:bg-vault-600"
         >
           Try Again
         </button>
@@ -73,15 +104,15 @@ export default function NotesList({ onNoteChange }) {
   if (notes.length === 0) {
     return (
       <div className="text-center py-20">
-        <FileText className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-        <h2 className="text-xl font-semibold text-slate-700 mb-2">No notes yet</h2>
-        <p className="text-slate-500 mb-6">
+        <FileText className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-2">No notes yet</h2>
+        <p className="text-slate-500 dark:text-slate-400 mb-6">
           Start capturing your thoughts and ideas
         </p>
         <Link
           to="/new"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-vault-600 text-white 
-                   rounded-xl hover:bg-vault-700 transition-colors font-medium"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-vault-600 dark:bg-vault-500 text-white 
+                   rounded-xl hover:bg-vault-700 dark:hover:bg-vault-600 transition-colors font-medium"
         >
           Create Your First Note
         </Link>
@@ -92,8 +123,19 @@ export default function NotesList({ onNoteChange }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Your Notes</h1>
-        <span className="text-slate-500">{notes.length} notes</span>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Your Notes</h1>
+          <span className="text-slate-500 dark:text-slate-400">{notes.length} notes</span>
+        </div>
+        <button
+          onClick={handleExportAll}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 
+                   rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+          title="Export all notes to Markdown"
+        >
+          <Download className="w-4 h-4" />
+          <span>Export All</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -101,16 +143,16 @@ export default function NotesList({ onNoteChange }) {
           <Link
             key={note._id}
             to={`/note/${note._id}`}
-            className="note-card bg-white rounded-xl p-5 border border-slate-200 
-                     hover:border-vault-300 block group relative"
+            className="note-card bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 
+                     hover:border-vault-300 dark:hover:border-vault-500 block group relative"
           >
             {/* Delete button */}
             <button
               onClick={(e) => handleDelete(e, note._id)}
               disabled={deletingId === note._id}
-              className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-500 
+              className="absolute top-3 right-3 p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 
                        opacity-0 group-hover:opacity-100 transition-opacity rounded-lg
-                       hover:bg-red-50"
+                       hover:bg-red-50 dark:hover:bg-red-900/20"
               title="Delete note"
             >
               {deletingId === note._id ? (
@@ -121,12 +163,12 @@ export default function NotesList({ onNoteChange }) {
             </button>
 
             {/* Title */}
-            <h3 className="font-semibold text-slate-800 mb-2 pr-8 line-clamp-2">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2 pr-8 line-clamp-2">
               {note.title}
             </h3>
 
             {/* Content preview */}
-            <p className="text-slate-600 text-sm mb-4 line-clamp-3">
+            <p className="text-slate-600 dark:text-slate-300 text-sm mb-4 line-clamp-3">
               {truncateText(note.content, 120)}
             </p>
 
@@ -143,7 +185,7 @@ export default function NotesList({ onNoteChange }) {
             )}
 
             {/* Date */}
-            <div className="flex items-center text-xs text-slate-400">
+            <div className="flex items-center text-xs text-slate-400 dark:text-slate-500">
               <Calendar className="w-3 h-3 mr-1" />
               {formatDate(note.createdAt)}
             </div>
