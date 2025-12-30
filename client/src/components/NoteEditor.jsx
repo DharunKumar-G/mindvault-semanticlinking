@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Save, X, Loader, Sparkles, Tag as TagIcon } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { debounce } from '../utils/debounce';
@@ -9,6 +9,7 @@ import RelatedNotesLive from './RelatedNotesLive';
 export default function NoteEditor({ onSave }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEditMode = !!id;
 
   const [title, setTitle] = useState('');
@@ -24,8 +25,14 @@ export default function NoteEditor({ onSave }) {
     loadAvailableTags();
     if (isEditMode) {
       loadNote();
+    } else if (location.state?.template) {
+      // Load template data
+      const template = location.state.template;
+      setTitle(template.title || '');
+      setContent(template.content || '');
+      setTags(template.tags || []);
     }
-  }, [id]);
+  }, [id, location.state]);
 
   useEffect(() => {
     if (content.length > 20) {

@@ -77,6 +77,12 @@ export const notesApi = {
     const response = await api.get('/notes/tags');
     return response.data;
   },
+
+  // Summarize note content
+  summarize: async (content, title = '') => {
+    const response = await api.post('/notes/summarize', { content, title });
+    return response.data;
+  },
 };
 
 export default api;

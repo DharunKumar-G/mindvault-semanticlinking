@@ -200,13 +200,13 @@ Looking for something to work on? Here are some ideas:
 - [x] Export notes to Markdown
 - [x] Keyboard shortcuts
 - [ ] Note sharing links
-- [ ] Note templates
+- [x] Note templates
 
 ### Medium
 - [ ] Note folders/collections
 - [ ] Multi-user support with authentication
 - [ ] Rich text editor (formatting, images)
-- [ ] Advanced filtering by date/tags
+- [x] Advanced filtering by date/tags
 - [ ] Mobile app (React Native)
 
 ### Advanced
@@ -218,7 +218,7 @@ Looking for something to work on? Here are some ideas:
 - [ ] Integration with other note apps (import/export)
 
 ### AI Enhancements
-- [ ] Smart note summarization
+- [x] Smart note summarization
 - [ ] Question answering from notes
 - [ ] Auto-linking related concepts
 - [ ] Content suggestions while writing

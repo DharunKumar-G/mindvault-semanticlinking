@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Brain, Sparkles, Moon, Sun } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Brain, Sparkles, Moon, Sun, FileText } from 'lucide-react';
 import { debounce } from '../utils/debounce';
 import { useTheme } from '../contexts/ThemeContext';
+import TemplateSelector from './TemplateSelector';
 
-export default function Header({ onSearch, searchQuery }) {
+export default function Header({ onSearch, searchQuery, onTemplateSelect }) {
   const [inputValue, setInputValue] = useState(searchQuery);
+  const [showTemplates, setShowTemplates] = useState(false);
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setInputValue(searchQuery);
@@ -31,8 +34,16 @@ export default function Header({ onSearch, searchQuery }) {
     onSearch(inputValue);
   };
 
+  const handleTemplateSelect = (template) => {
+    if (onTemplateSelect) {
+      onTemplateSelect(template);
+    }
+    navigate('/new', { state: { template } });
+  };
+
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors">
+    <>
+      <header className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 transition-colors">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
@@ -77,6 +88,18 @@ export default function Header({ onSearch, searchQuery }) {
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
 
+          {/* Template Button */}
+          <button
+            onClick={() => setShowTemplates(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 
+                     border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-600 
+                     transition-colors font-medium shadow-sm hover:shadow-md"
+            title="Use a template"
+          >
+            <FileText className="w-4 h-4" />
+            <span className="hidden md:block">Templates</span>
+          </button>
+
           {/* New Note Button */}
           <Link
             to="/new"
@@ -90,5 +113,12 @@ export default function Header({ onSearch, searchQuery }) {
         </div>
       </div>
     </header>
+
+    <TemplateSelector 
+      isOpen={showTemplates}
+      onClose={() => setShowTemplates(false)}
+      onSelectTemplate={handleTemplateSelect}
+    />
+    </>
   );
 }

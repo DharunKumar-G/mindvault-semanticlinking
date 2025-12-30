@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Edit, Trash2, Clock, Tag as TagIcon, Loader, ArrowLeft, Sparkles, Download } from 'lucide-react';
+import { Edit, Trash2, Clock, Tag as TagIcon, Loader, ArrowLeft, Sparkles, Download, FileText } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { formatDate, getTagClassName } from '../utils/debounce';
 import RelatedNotes from './RelatedNotes';
@@ -11,6 +11,9 @@ export default function NoteDetail({ onNoteChange }) {
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
+  const [summary, setSummary] = useState('');
+  const [showSummary, setShowSummary] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -79,6 +82,22 @@ export default function NoteDetail({ onNoteChange }) {
     URL.revokeObjectURL(url);
   };
 
+  const handleSummarize = async () => {
+    if (!note) return;
+    
+    try {
+      setSummarizing(true);
+      const result = await notesApi.summarize(note.content, note.title);
+      setSummary(result.summary);
+      setShowSummary(true);
+    } catch (err) {
+      console.error('Error summarizing note:', err);
+      alert('Failed to summarize note');
+    } finally {
+      setSummarizing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -118,9 +137,20 @@ export default function NoteDetail({ onNoteChange }) {
               </Link>
               <div className="flex gap-2">
                 <button
+                  onClick={handleSummarize}
+                  disabled={summarizing}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 
+                           border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 
+                           transition-colors disabled:opacity-50"
+                  title="AI Summarize"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>{summarizing ? 'Summarizing...' : 'Summarize'}</span>
+                </button>
+                <button
                   onClick={handleExportMarkdown}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-slate-600 
-                           border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 
+                           border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
                   title="Export to Markdown"
                 >
                   <Download className="w-4 h-4" />
@@ -128,8 +158,8 @@ export default function NoteDetail({ onNoteChange }) {
                 </button>
                 <Link
                   to={`/edit/${id}`}
-                  className="flex items-center gap-2 px-4 py-2 bg-white text-vault-600 
-                           border border-vault-300 rounded-lg hover:bg-vault-50 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-700 text-vault-600 dark:text-vault-400 
+                           border border-vault-300 dark:border-vault-600 rounded-lg hover:bg-vault-50 dark:hover:bg-slate-600 transition-colors"
                 >
                   <Edit className="w-4 h-4" />
                   <span>Edit</span>
@@ -137,8 +167,8 @@ export default function NoteDetail({ onNoteChange }) {
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white 
-                           rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 dark:bg-red-700 text-white 
+                           rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>{deleting ? 'Deleting...' : 'Delete'}</span>
@@ -178,9 +208,30 @@ export default function NoteDetail({ onNoteChange }) {
               </div>
             )}
 
+            {/* AI Summary */}
+            {showSummary && summary && (
+              <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-purple-900 dark:text-purple-200 mb-2">AI Summary</h3>
+                    <p className="text-purple-800 dark:text-purple-300 text-sm leading-relaxed">
+                      {summary}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowSummary(false)}
+                    className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Note Content */}
             <div className="prose max-w-none">
-              <p className="text-slate-700 text-base leading-relaxed whitespace-pre-wrap">
+              <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed whitespace-pre-wrap">
                 {note.content}
               </p>
             </div>

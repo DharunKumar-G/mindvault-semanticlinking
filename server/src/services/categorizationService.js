@@ -67,6 +67,35 @@ Note to categorize: "${content}"`;
 /**
  * Generate a brief summary of a note using Gemini
  * @param {string} content - The note content
+ * @param {string} title - The note title (optional)
+ * @returns {Promise<string>} - Brief summary
+ */
+export async function summarizeNote(content, title = '') {
+  try {
+    if (content.length < 100) {
+      return content;
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `Generate a concise, informative summary of the following note in 2-3 sentences. Capture the main points and key ideas.
+
+${title ? `Title: ${title}\n\n` : ''}Content: ${content}
+
+Summary:`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text().trim();
+  } catch (error) {
+    console.error('Error summarizing note with Gemini:', error);
+    return content.substring(0, 150) + '...';
+  }
+}
+
+/**
+ * Generate a brief summary of a note using Gemini (legacy method)
+ * @param {string} content - The note content
  * @returns {Promise<string>} - Brief summary
  */
 export async function generateSummary(content) {

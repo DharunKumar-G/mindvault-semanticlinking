@@ -9,7 +9,7 @@ import {
   findRelatedNotes,
   findRelatedByContent,
 } from '../services/noteService.js';
-import { categorizeNote } from '../services/categorizationService.js';
+import { categorizeNote, summarizeNote } from '../services/categorizationService.js';
 import { AVAILABLE_TAGS } from '../services/categorizationService.js';
 
 const router = express.Router();
@@ -161,6 +161,23 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting note:', error);
     res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+// POST /api/notes/summarize - Summarize note content
+router.post('/summarize', async (req, res) => {
+  try {
+    const { content, title } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const summary = await summarizeNote(content, title);
+    res.json({ summary });
+  } catch (error) {
+    console.error('Error summarizing:', error);
+    res.status(500).json({ error: 'Failed to summarize content' });
   }
 });
 

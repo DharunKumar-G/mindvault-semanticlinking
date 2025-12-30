@@ -1,14 +1,77 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Calendar, Tag, Trash2, Loader2, Download } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { formatDate, truncateText, getTagClassName } from '../utils/debounce';
+import NotesFilter from './NotesFilter';
 
 export default function NotesList({ onNoteChange }) {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [filters, setFilters] = useState({
+    tags: [],
+    dateFrom: '',
+    dateTo: '',
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
+
+  // Get unique tags from all notes
+  const availableTags = useMemo(() => {
+    const tagsSet = new Set();
+    notes.forEach(note => {
+      if (note.tags) {
+        note.tags.forEach(tag => tagsSet.add(tag));
+      }
+    });
+    return Array.from(tagsSet).sort();
+  }, [notes]);
+
+  // Filter and sort notes
+  const filteredNotes = useMemo(() => {
+    let result = [...notes];
+
+    // Filter by tags
+    if (filters.tags.length > 0) {
+      result = result.filter(note => 
+        note.tags && note.tags.some(tag => filters.tags.includes(tag))
+      );
+    }
+
+    // Filter by date range
+    if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      result = result.filter(note => new Date(note.createdAt) >= fromDate);
+    }
+    if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999); // End of day
+      result = result.filter(note => new Date(note.createdAt) <= toDate);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let aVal, bVal;
+      
+      if (filters.sortBy === 'title') {
+        aVal = a.title.toLowerCase();
+        bVal = b.title.toLowerCase();
+        return filters.sortOrder === 'asc' 
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      } else {
+        aVal = new Date(a[filters.sortBy]);
+        bVal = new Date(b[filters.sortBy]);
+        return filters.sortOrder === 'asc' 
+          ? aVal - bVal
+          : bVal - aVal;
+      }
+    });
+
+    return result;
+  }, [notes, filters]);
 
   useEffect(() => {
     fetchNotes();
@@ -48,14 +111,15 @@ export default function NotesList({ onNoteChange }) {
   };
 
   const handleExportAll = () => {
-    if (notes.length === 0) return;
+    const notesToExport = filteredNotes.length > 0 ? filteredNotes : notes;
+    if (notesToExport.length === 0) return;
 
     let markdown = `# MindVault Notes Export\n\n`;
     markdown += `Exported on: ${new Date().toLocaleDateString()}\n`;
-    markdown += `Total Notes: ${notes.length}\n\n`;
+    markdown += `Total Notes: ${notesToExport.length}\n\n`;
     markdown += `---\n\n`;
 
-    notes.forEach((note, index) => {
+    notesToExport.forEach((note, index) => {
       markdown += `## ${index + 1}. ${note.title}\n\n`;
       
       if (note.tags && note.tags.length > 0) {
@@ -122,24 +186,41 @@ export default function NotesList({ onNoteChange }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Your Notes</h1>
-          <span className="text-slate-500 dark:text-slate-400">{notes.length} notes</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            {filteredNotes.length} {filteredNotes.length !== notes.length && `of ${notes.length}`} notes
+          </span>
         </div>
-        <button
-          onClick={handleExportAll}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 
-                   rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-          title="Export all notes to Markdown"
-        >
-          <Download className="w-4 h-4" />
-          <span>Export All</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <NotesFilter 
+            onFilterChange={setFilters}
+            availableTags={availableTags}
+          />
+          <button
+            onClick={handleExportAll}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 
+                     rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            title="Export all notes to Markdown"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export All</span>
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {notes.map((note) => (
+      {filteredNotes.length === 0 && notes.length > 0 ? (
+        <div className="text-center py-20">
+          <FileText className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-2">No notes match your filters</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
+            Try adjusting your filter criteria
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredNotes.map((note) => (
           <Link
             key={note._id}
             to={`/note/${note._id}`}
@@ -192,6 +273,7 @@ export default function NotesList({ onNoteChange }) {
           </Link>
         ))}
       </div>
+      )}
     </div>
   );
 }
