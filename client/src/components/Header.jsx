@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Brain, Sparkles, Moon, Sun, FileText } from 'lucide-react';
+import { Search, Brain, Sparkles, Moon, Sun, FileText, Settings } from 'lucide-react';
 import { debounce } from '../utils/debounce';
 import { useTheme } from '../contexts/ThemeContext';
 import TemplateSelector from './TemplateSelector';
@@ -87,6 +87,16 @@ export default function Header({ onSearch, searchQuery, onTemplateSelect }) {
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
+
+          {/* Settings Button */}
+          <Link
+            to="/settings"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 
+                     transition-colors text-slate-600 dark:text-slate-300"
+            title="Settings & Import/Export"
+          >
+            <Settings className="w-5 h-5" />
+          </Link>
 
           {/* Template Button */}
           <button

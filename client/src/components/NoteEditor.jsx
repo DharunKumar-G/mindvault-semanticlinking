@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Save, X, Loader, Sparkles, Tag as TagIcon } from 'lucide-react';
+import { Save, X, Loader, Sparkles, Tag as TagIcon, Type, Code } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { debounce } from '../utils/debounce';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import RelatedNotesLive from './RelatedNotesLive';
 import DuplicateWarning from './DuplicateWarning';
 import WritingSuggestions from './WritingSuggestions';
+import RichTextEditor from './RichTextEditor';
 
 export default function NoteEditor({ onSave }) {
   const { id } = useParams();
@@ -27,6 +28,7 @@ export default function NoteEditor({ onSave }) {
   const [ignoreDuplicates, setIgnoreDuplicates] = useState(false);
   const [writingSuggestions, setWritingSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [useRichText, setUseRichText] = useState(false);
 
   useEffect(() => {
     loadAvailableTags();
@@ -271,20 +273,48 @@ export default function NoteEditor({ onSave }) {
 
               {/* Content */}
               <div>
-                <label htmlFor="content" className="block text-sm font-medium text-slate-700 mb-2">
-                  Content
-                </label>
-                <textarea
-                  id="content"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write your thoughts... MindVault will help you find it later by meaning, not just keywords."
-                  rows={12}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg 
-                           focus:ring-2 focus:ring-vault-500 focus:border-transparent 
-                           resize-none"
-                  required
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Content
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setUseRichText(!useRichText)}
+                    className="flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 transition-colors"
+                  >
+                    {useRichText ? (
+                      <>
+                        <Code className="w-3.5 h-3.5" />
+                        Plain Text
+                      </>
+                    ) : (
+                      <>
+                        <Type className="w-3.5 h-3.5" />
+                        Rich Text
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {useRichText ? (
+                  <RichTextEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Write your thoughts... MindVault will help you find it later by meaning, not just keywords."
+                  />
+                ) : (
+                  <textarea
+                    id="content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Write your thoughts... MindVault will help you find it later by meaning, not just keywords."
+                    rows={12}
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg 
+                             focus:ring-2 focus:ring-vault-500 focus:border-transparent 
+                             resize-none bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    required
+                  />
+                )}
               </div>
 
               {/* Tags */}

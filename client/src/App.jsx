@@ -9,6 +9,8 @@ import SearchResults from './components/SearchResults';
 import NoteDetail from './components/NoteDetail';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import AskQuestion from './components/AskQuestion';
+import GraphView from './components/GraphView';
+import ImportExport from './components/ImportExport';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,11 +121,18 @@ function AppContent() {
               path="/edit/:id" 
               element={<NoteEditor onSave={handleNoteChange} />} 
             />
+            <Route 
+              path="/settings" 
+              element={<ImportExport />} 
+            />
           </Routes>
         </main>
 
         {/* AI Question Assistant */}
         <AskQuestion />
+        
+        {/* Graph View */}
+        <GraphView />
       </div>
 
       <KeyboardShortcutsModal 

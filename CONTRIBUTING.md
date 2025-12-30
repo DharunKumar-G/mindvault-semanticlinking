@@ -205,17 +205,17 @@ Looking for something to work on? Here are some ideas:
 ### Medium
 - [x] Note folders/collections
 - [ ] Multi-user support with authentication
-- [ ] Rich text editor (formatting, images)
+- [x] Rich text editor (formatting, images)
 - [x] Advanced filtering by date/tags
 - [ ] Mobile app (React Native)
 
 ### Advanced
 - [ ] Voice-to-text note creation
 - [ ] PDF/document import with OCR
-- [ ] Graph view of note connections
+- [x] Graph view of note connections
 - [ ] Collaborative editing
 - [ ] Browser extension for quick capture
-- [ ] Integration with other note apps (import/export)
+- [x] Integration with other note apps (import/export)
 
 ### AI Enhancements
 - [x] Smart note summarization
