@@ -117,4 +117,58 @@ export async function generateSummary(content) {
   }
 }
 
+/**
+ * Get AI-powered writing suggestions for improving note content
+ * @param {string} content - The current note content
+ * @param {string} title - The note title (optional)
+ * @returns {Promise<Array>} - Array of suggestion objects
+ */
+export async function getWritingSuggestions(content, title = '') {
+  try {
+    if (!content || content.length < 100) {
+      return [];
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `You are a helpful writing assistant. Analyze the following note and suggest 2-3 specific improvements to make it clearer, more structured, or more detailed. Be concise and actionable.
+
+${title ? `Title: ${title}\n\n` : ''}Content: ${content}
+
+Return ONLY a JSON array of objects with this format:
+[
+  {
+    "type": "clarity|structure|detail|grammar",
+    "suggestion": "specific suggestion text here"
+  }
+]
+
+Keep each suggestion under 80 characters. Focus on the most impactful improvements.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
+    
+    try {
+      // Remove markdown code blocks if present
+      const cleanText = text.replace(/```json\n?|\n?```/g, '').trim();
+      const suggestions = JSON.parse(cleanText);
+      
+      // Validate and limit to 3 suggestions
+      if (Array.isArray(suggestions)) {
+        return suggestions
+          .filter(s => s.type && s.suggestion)
+          .slice(0, 3);
+      }
+      return [];
+    } catch {
+      console.warn('Failed to parse suggestions response:', text);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error getting writing suggestions with Gemini:', error);
+    return [];
+  }
+}
+
 export { AVAILABLE_TAGS };

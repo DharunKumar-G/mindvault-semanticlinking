@@ -83,6 +83,22 @@ export const notesApi = {
     const response = await api.post('/notes/summarize', { content, title });
     return response.data;
   },
+
+  // Check for duplicate/similar notes
+  checkDuplicates: async (title, content, excludeId = null) => {
+    const response = await api.post('/notes/check-duplicates', { 
+      title, 
+      content,
+      excludeId 
+    });
+    return response.data;
+  },
+
+  // Get writing suggestions
+  getWritingSuggestions: async (content, context = '') => {
+    const response = await api.post('/notes/writing-suggestions', { content, context });
+    return response.data;
+  },
 };
 
 export default api;

@@ -5,6 +5,8 @@ import { notesApi } from '../services/api';
 import { debounce } from '../utils/debounce';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import RelatedNotesLive from './RelatedNotesLive';
+import DuplicateWarning from './DuplicateWarning';
+import WritingSuggestions from './WritingSuggestions';
 
 export default function NoteEditor({ onSave }) {
   const { id } = useParams();
@@ -20,6 +22,11 @@ export default function NoteEditor({ onSave }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingTags, setLoadingTags] = useState(false);
+  const [duplicates, setDuplicates] = useState([]);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [ignoreDuplicates, setIgnoreDuplicates] = useState(false);
+  const [writingSuggestions, setWritingSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     loadAvailableTags();
@@ -39,6 +46,20 @@ export default function NoteEditor({ onSave }) {
       debouncedGetSuggestedTags(content);
     }
   }, [content]);
+
+  // Check for duplicates when title or content changes
+  useEffect(() => {
+    if (!isEditMode && (title.length > 10 || content.length > 50) && !ignoreDuplicates) {
+      debouncedCheckDuplicates(title, content);
+    }
+  }, [title, content, isEditMode, ignoreDuplicates]);
+
+  // Get writing suggestions periodically
+  useEffect(() => {
+    if (content.length > 100 && content.length < 1000) {
+      debouncedGetSuggestions(content, title);
+    }
+  }, [content, title]);
 
   const loadNote = async () => {
     try {
@@ -83,6 +104,50 @@ export default function NoteEditor({ onSave }) {
     debounce((text) => getSuggestedTags(text), 1500),
     []
   );
+
+  const checkDuplicates = async (noteTitle, noteContent) => {
+    if (!noteTitle && !noteContent) return;
+    
+    try {
+      const result = await notesApi.checkDuplicates(noteTitle, noteContent, id);
+      if (result.duplicates && result.duplicates.length > 0) {
+        setDuplicates(result.duplicates);
+        setShowDuplicateWarning(true);
+      }
+    } catch (err) {
+      console.error('Error checking duplicates:', err);
+    }
+  };
+
+  const debouncedCheckDuplicates = useCallback(
+    debounce((noteTitle, noteContent) => checkDuplicates(noteTitle, noteContent), 2000),
+    []
+  );
+
+  const getWritingSuggestions = async (noteContent, noteTitle) => {
+    try {
+      const result = await notesApi.getWritingSuggestions(noteContent, noteTitle);
+      if (result.suggestions && result.suggestions.length > 0) {
+        setWritingSuggestions(result.suggestions);
+        setShowSuggestions(true);
+      }
+    } catch (err) {
+      console.error('Error getting writing suggestions:', err);
+    }
+  };
+
+  const debouncedGetSuggestions = useCallback(
+    debounce((noteContent, noteTitle) => getWritingSuggestions(noteContent, noteTitle), 3000),
+    []
+  );
+
+  const handleApplySuggestion = (suggestion) => {
+    if (suggestion.action === 'add') {
+      setContent(prev => prev + '\n\n' + suggestion.value);
+    }
+    // Remove the applied suggestion
+    setWritingSuggestions(prev => prev.filter(s => s !== suggestion));
+  };
 
   const handleAddTag = (tag) => {
     if (!tags.includes(tag)) {
@@ -155,19 +220,40 @@ export default function NoteEditor({ onSave }) {
       {/* Main Editor */}
       <div className="lg:col-span-2">
         <form onSubmit={handleSubmit}>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-vault-50 to-vault-100 px-6 py-4 border-b border-vault-200">
-              <h1 className="text-2xl font-bold text-slate-800">
+            <div className="bg-gradient-to-r from-vault-50 to-vault-100 dark:from-slate-700 dark:to-slate-700 px-6 py-4 border-b border-vault-200 dark:border-slate-600">
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
                 {isEditMode ? 'Edit Note' : 'Create New Note'}
               </h1>
             </div>
 
             {/* Form */}
             <div className="p-6 space-y-6">
+              {/* Duplicate Warning */}
+              {showDuplicateWarning && !ignoreDuplicates && (
+                <DuplicateWarning
+                  duplicates={duplicates}
+                  onClose={() => setShowDuplicateWarning(false)}
+                  onIgnore={() => {
+                    setIgnoreDuplicates(true);
+                    setShowDuplicateWarning(false);
+                  }}
+                />
+              )}
+
+              {/* Writing Suggestions */}
+              {showSuggestions && writingSuggestions.length > 0 && (
+                <WritingSuggestions
+                  suggestions={writingSuggestions}
+                  onDismiss={() => setShowSuggestions(false)}
+                  onApply={handleApplySuggestion}
+                />
+              )}
+
               {/* Title */}
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                   Title
                 </label>
                 <input

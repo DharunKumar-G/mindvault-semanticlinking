@@ -199,7 +199,7 @@ Looking for something to work on? Here are some ideas:
 - [x] Add dark mode toggle
 - [x] Export notes to Markdown
 - [x] Keyboard shortcuts
-- [ ] Note sharing links
+- [x] Note sharing links
 - [x] Note templates
 
 ### Medium
@@ -221,8 +221,8 @@ Looking for something to work on? Here are some ideas:
 - [x] Smart note summarization
 - [ ] Question answering from notes
 - [ ] Auto-linking related concepts
-- [ ] Content suggestions while writing
-- [ ] Duplicate detection
+- [x] Content suggestions while writing
+- [x] Duplicate detection
 
 ## 🐛 Reporting Bugs
 

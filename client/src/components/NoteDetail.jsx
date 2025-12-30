@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Edit, Trash2, Clock, Tag as TagIcon, Loader, ArrowLeft, Sparkles, Download, FileText } from 'lucide-react';
+import { Edit, Trash2, Clock, Tag as TagIcon, Loader, ArrowLeft, Sparkles, Download, FileText, Share2 } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { formatDate, getTagClassName } from '../utils/debounce';
 import RelatedNotes from './RelatedNotes';
+import ShareModal from './ShareModal';
 
 export default function NoteDetail({ onNoteChange }) {
   const { id } = useParams();
@@ -14,6 +15,7 @@ export default function NoteDetail({ onNoteChange }) {
   const [summarizing, setSummarizing] = useState(false);
   const [summary, setSummary] = useState('');
   const [showSummary, setShowSummary] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -137,6 +139,16 @@ export default function NoteDetail({ onNoteChange }) {
               </Link>
               <div className="flex gap-2">
                 <button
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 
+                           border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 
+                           transition-colors"
+                  title="Share note"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
+                <button
                   onClick={handleSummarize}
                   disabled={summarizing}
                   className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 
@@ -256,6 +268,13 @@ export default function NoteDetail({ onNoteChange }) {
           </div>
         </div>
       </div>
+
+      <ShareModal 
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        noteId={id}
+        noteTitle={note?.title}
+      />
     </div>
   );
 }

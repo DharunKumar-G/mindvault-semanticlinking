@@ -181,4 +181,43 @@ router.post('/summarize', async (req, res) => {
   }
 });
 
+// POST /api/notes/check-duplicates - Check for duplicate/similar notes
+router.post('/check-duplicates', async (req, res) => {
+  try {
+    const { title, content, limit = 3 } = req.body;
+    
+    if (!title || !content) {
+      return res.json([]);
+    }
+
+    const textToCheck = `${title} ${content}`;
+    const duplicates = await findRelatedByContent(textToCheck, parseInt(limit));
+    
+    // Filter to only show high similarity matches (> 0.75)
+    const highSimilarity = duplicates.filter(note => note.score > 0.75);
+    res.json(highSimilarity);
+  } catch (error) {
+    console.error('Error checking duplicates:', error);
+    res.status(500).json({ error: 'Failed to check duplicates' });
+  }
+});
+
+// POST /api/notes/writing-suggestions - Get AI writing suggestions
+router.post('/writing-suggestions', async (req, res) => {
+  try {
+    const { content, title } = req.body;
+    
+    if (!content) {
+      return res.json([]);
+    }
+
+    const { getWritingSuggestions } = await import('../services/categorizationService.js');
+    const suggestions = await getWritingSuggestions(content, title);
+    res.json(suggestions);
+  } catch (error) {
+    console.error('Error getting writing suggestions:', error);
+    res.status(500).json({ error: 'Failed to get writing suggestions' });
+  }
+});
+
 export default router;
