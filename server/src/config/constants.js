@@ -1,0 +1,56 @@
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+};
+
+export const VECTOR_CONFIG = {
+  DIMENSIONS: 768,
+  SIMILARITY_THRESHOLD: 0.7,
+  MAX_RELATED_NOTES: 10,
+  INDEX_TYPE: 'ivfflat',
+  DISTANCE_METRIC: 'cosine',
+};
+
+export const GEMINI_CONFIG = {
+  EMBEDDING_MODEL: 'text-embedding-004',
+  GENERATION_MODEL: 'gemini-pro',
+  MAX_TOKENS: 1000,
+  TEMPERATURE: 0.7,
+};
+
+export const DATABASE_CONFIG = {
+  MAX_POOL_SIZE: 20,
+  IDLE_TIMEOUT: 30000,
+  CONNECTION_TIMEOUT: 5000,
+};
+
+export const VALIDATION_RULES = {
+  TITLE_MIN_LENGTH: 1,
+  TITLE_MAX_LENGTH: 200,
+  CONTENT_MIN_LENGTH: 1,
+  CONTENT_MAX_LENGTH: 50000,
+  TAG_MIN_LENGTH: 1,
+  TAG_MAX_LENGTH: 30,
+  MAX_TAGS_PER_NOTE: 10,
+};
+
+export const RATE_LIMITS = {
+  WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+  MAX_REQUESTS: 100,
+};
+
+export const ERROR_MESSAGES = {
+  NOTE_NOT_FOUND: 'Note not found',
+  INVALID_INPUT: 'Invalid input data',
+  DATABASE_ERROR: 'Database operation failed',
+  AI_SERVICE_ERROR: 'AI service temporarily unavailable',
+  VALIDATION_FAILED: 'Validation failed',
+};
