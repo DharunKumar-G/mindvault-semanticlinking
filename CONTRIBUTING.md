@@ -201,6 +201,9 @@ Looking for something to work on? Here are some ideas:
 - [x] Keyboard shortcuts
 - [x] Note sharing links
 - [x] Note templates
+- [x] Note pinning
+- [x] Note archiving
+- [x] Recent notes quick access
 
 ### Medium
 - [x] Note folders/collections

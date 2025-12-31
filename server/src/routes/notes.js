@@ -8,6 +8,10 @@ import {
   semanticSearch,
   findRelatedNotes,
   findRelatedByContent,
+  togglePinNote,
+  toggleArchiveNote,
+  updateLastViewed,
+  getRecentlyViewedNotes,
 } from '../services/noteService.js';
 import { categorizeNote, summarizeNote, answerQuestion } from '../services/categorizationService.js';
 import { AVAILABLE_TAGS } from '../services/categorizationService.js';
@@ -17,11 +21,24 @@ const router = express.Router();
 // GET /api/notes - Get all notes
 router.get('/', async (req, res) => {
   try {
-    const notes = await getAllNotes();
+    const { includeArchived } = req.query;
+    const notes = await getAllNotes(includeArchived === 'true');
     res.json(notes);
   } catch (error) {
     console.error('Error fetching notes:', error);
     res.status(500).json({ error: 'Failed to fetch notes' });
+  }
+});
+
+// GET /api/notes/recent - Get recently viewed notes
+router.get('/recent', async (req, res) => {
+  try {
+    const { limit = 5 } = req.query;
+    const notes = await getRecentlyViewedNotes(parseInt(limit));
+    res.json(notes);
+  } catch (error) {
+    console.error('Error fetching recent notes:', error);
+    res.status(500).json({ error: 'Failed to fetch recent notes' });
   }
 });
 
@@ -89,6 +106,9 @@ router.get('/:id', async (req, res) => {
     if (!note) {
       return res.status(404).json({ error: 'Note not found' });
     }
+
+    // Update last viewed timestamp
+    await updateLastViewed(req.params.id);
 
     res.json(note);
   } catch (error) {
@@ -238,6 +258,38 @@ router.post('/ask', async (req, res) => {
   } catch (error) {
     console.error('Error answering question:', error);
     res.status(500).json({ error: 'Failed to answer question' });
+  }
+});
+
+// POST /api/notes/:id/pin - Toggle note pinned status
+router.post('/:id/pin', async (req, res) => {
+  try {
+    const result = await togglePinNote(req.params.id);
+    
+    if (!result) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error pinning note:', error);
+    res.status(500).json({ error: 'Failed to pin note' });
+  }
+});
+
+// POST /api/notes/:id/archive - Toggle note archived status
+router.post('/:id/archive', async (req, res) => {
+  try {
+    const result = await toggleArchiveNote(req.params.id);
+    
+    if (!result) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error archiving note:', error);
+    res.status(500).json({ error: 'Failed to archive note' });
   }
 });
 

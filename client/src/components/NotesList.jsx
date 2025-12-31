@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Calendar, Tag, Trash2, Loader2, Download } from 'lucide-react';
+import { FileText, Calendar, Tag, Trash2, Loader2, Download, Pin, Archive } from 'lucide-react';
 import { notesApi } from '../services/api';
 import { formatDate, truncateText, getTagClassName } from '../utils/debounce';
 import NotesFilter from './NotesFilter';
@@ -107,6 +107,32 @@ export default function NotesList({ onNoteChange }) {
       alert('Failed to delete note. Please try again.');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handlePin = async (e, noteId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await notesApi.togglePin(noteId);
+      fetchNotes();
+      onNoteChange?.();
+    } catch (err) {
+      console.error('Error pinning note:', err);
+    }
+  };
+
+  const handleArchive = async (e, noteId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      await notesApi.toggleArchive(noteId);
+      fetchNotes();
+      onNoteChange?.();
+    } catch (err) {
+      console.error('Error archiving note:', err);
     }
   };
 
@@ -227,24 +253,51 @@ export default function NotesList({ onNoteChange }) {
             className="note-card bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 
                      hover:border-vault-300 dark:hover:border-vault-500 block group relative"
           >
-            {/* Delete button */}
-            <button
-              onClick={(e) => handleDelete(e, note._id)}
-              disabled={deletingId === note._id}
-              className="absolute top-3 right-3 p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 
-                       opacity-0 group-hover:opacity-100 transition-opacity rounded-lg
-                       hover:bg-red-50 dark:hover:bg-red-900/20"
-              title="Delete note"
-            >
-              {deletingId === note._id ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Trash2 className="w-4 h-4" />
-              )}
-            </button>
+            {/* Action buttons */}
+            <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={(e) => handlePin(e, note._id)}
+                className={`p-2 rounded-lg transition-colors ${
+                  note.is_pinned 
+                    ? 'text-yellow-500 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20' 
+                    : 'text-slate-400 dark:text-slate-500 hover:text-yellow-500 dark:hover:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                }`}
+                title={note.is_pinned ? 'Unpin note' : 'Pin note'}
+              >
+                <Pin className="w-4 h-4" fill={note.is_pinned ? 'currentColor' : 'none'} />
+              </button>
+              <button
+                onClick={(e) => handleArchive(e, note._id)}
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 
+                         rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                title="Archive note"
+              >
+                <Archive className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, note._id)}
+                disabled={deletingId === note._id}
+                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 
+                         rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                title="Delete note"
+              >
+                {deletingId === note._id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+
+            {/* Pin indicator */}
+            {note.is_pinned && (
+              <div className="absolute top-3 left-3">
+                <Pin className="w-4 h-4 text-yellow-500 dark:text-yellow-400" fill="currentColor" />
+              </div>
+            )}
 
             {/* Title */}
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2 pr-8 line-clamp-2">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2 pr-24 pl-6 line-clamp-2">
               {note.title}
             </h3>
 

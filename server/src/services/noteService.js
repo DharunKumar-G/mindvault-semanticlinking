@@ -24,7 +24,7 @@ export async function createNote(noteData) {
   const query = `
     INSERT INTO notes (title, content, tags, embedding, created_at, updated_at)
     VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    RETURNING id, title, content, tags, collection_id, created_at, updated_at
+    RETURNING id, title, content, tags, collection_id, is_pinned, is_archived, created_at, updated_at
   `;
   
   const values = [title, content, tags, pgvector.toSql(embedding)];
@@ -35,16 +35,19 @@ export async function createNote(noteData) {
 
 /**
  * Get all notes (without embeddings for performance)
+ * @param {boolean} includeArchived - Whether to include archived notes
  * @returns {Promise<Array>} - Array of notes
  */
-export async function getAllNotes() {
+export async function getAllNotes(includeArchived = false) {
   const query = `
-    SELECT id, title, content, tags, collection_id, created_at, updated_at
+    SELECT id, title, content, tags, collection_id, is_pinned, is_archived, 
+           last_viewed_at, created_at, updated_at
     FROM notes
-    ORDER BY created_at DESC
+    WHERE is_archived = $1 OR $2 = TRUE
+    ORDER BY is_pinned DESC, created_at DESC
   `;
   
-  const result = await pool.query(query);
+  const result = await pool.query(query, [false, includeArchived]);
   return result.rows;
 }
 
@@ -55,7 +58,8 @@ export async function getAllNotes() {
  */
 export async function getNoteById(id) {
   const query = `
-    SELECT id, title, content, tags, collection_id, created_at, updated_at
+    SELECT id, title, content, tags, collection_id, is_pinned, is_archived,
+           last_viewed_at, created_at, updated_at
     FROM notes
     WHERE id = $1
   `;
@@ -81,7 +85,7 @@ export async function updateNote(id, updateData) {
     UPDATE notes
     SET title = $1, content = $2, tags = $3, embedding = $4, updated_at = CURRENT_TIMESTAMP
     WHERE id = $5
-    RETURNING id, title, content, tags, collection_id, created_at, updated_at
+    RETURNING id, title, content, tags, collection_id, is_pinned, is_archived, created_at, updated_at
   `;
   
   const values = [title, content, tags, pgvector.toSql(embedding), id];
@@ -204,5 +208,72 @@ export async function findRelatedByContent(text, limit = 5) {
   const values = [pgvector.toSql(textEmbedding), limit];
   const result = await pool.query(query, values);
   
+  return result.rows;
+}
+
+/**
+ * Toggle note pinned status
+ * @param {string} id - Note ID
+ * @returns {Promise<Object>} - Updated note
+ */
+export async function togglePinNote(id) {
+  const query = `
+    UPDATE notes
+    SET is_pinned = NOT is_pinned
+    WHERE id = $1
+    RETURNING id, is_pinned
+  `;
+  
+  const result = await pool.query(query, [id]);
+  return result.rows[0];
+}
+
+/**
+ * Toggle note archived status
+ * @param {string} id - Note ID
+ * @returns {Promise<Object>} - Updated note
+ */
+export async function toggleArchiveNote(id) {
+  const query = `
+    UPDATE notes
+    SET is_archived = NOT is_archived
+    WHERE id = $1
+    RETURNING id, is_archived
+  `;
+  
+  const result = await pool.query(query, [id]);
+  return result.rows[0];
+}
+
+/**
+ * Update last viewed timestamp for a note
+ * @param {string} id - Note ID
+ * @returns {Promise<void>}
+ */
+export async function updateLastViewed(id) {
+  const query = `
+    UPDATE notes
+    SET last_viewed_at = CURRENT_TIMESTAMP
+    WHERE id = $1
+  `;
+  
+  await pool.query(query, [id]);
+}
+
+/**
+ * Get recently viewed notes
+ * @param {number} limit - Number of notes to return
+ * @returns {Promise<Array>} - Array of recently viewed notes
+ */
+export async function getRecentlyViewedNotes(limit = 5) {
+  const query = `
+    SELECT id, title, tags, last_viewed_at
+    FROM notes
+    WHERE last_viewed_at IS NOT NULL AND is_archived = FALSE
+    ORDER BY last_viewed_at DESC
+    LIMIT $1
+  `;
+  
+  const result = await pool.query(query, [limit]);
   return result.rows;
 }

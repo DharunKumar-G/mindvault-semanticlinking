@@ -11,6 +11,7 @@ import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import AskQuestion from './components/AskQuestion';
 import GraphView from './components/GraphView';
 import ImportExport from './components/ImportExport';
+import RecentNotes from './components/RecentNotes';
 
 function AppContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,10 +103,15 @@ function AppContent() {
                     onClearSearch={handleClearSearch}
                   />
                 ) : (
-                  <NotesList 
-                    key={refreshKey} 
-                    onNoteChange={handleNoteChange} 
-                  />
+                  <div>
+                    <RecentNotes key={refreshKey} />
+                    <div className="mt-6">
+                      <NotesList 
+                        key={refreshKey} 
+                        onNoteChange={handleNoteChange} 
+                      />
+                    </div>
+                  </div>
                 )
               } 
             />

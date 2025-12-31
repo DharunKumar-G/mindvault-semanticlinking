@@ -12,8 +12,18 @@ const api = axios.create({
 // Notes API
 export const notesApi = {
   // Get all notes
-  getAll: async () => {
-    const response = await api.get('/notes');
+  getAll: async (includeArchived = false) => {
+    const response = await api.get('/notes', {
+      params: { includeArchived }
+    });
+    return response.data;
+  },
+
+  // Get recently viewed notes
+  getRecent: async (limit = 5) => {
+    const response = await api.get('/notes/recent', {
+      params: { limit }
+    });
     return response.data;
   },
 
@@ -97,6 +107,24 @@ export const notesApi = {
   // Get writing suggestions
   getWritingSuggestions: async (content, context = '') => {
     const response = await api.post('/notes/writing-suggestions', { content, context });
+    return response.data;
+  },
+
+  // Toggle pin status
+  togglePin: async (id) => {
+    const response = await api.post(`/notes/${id}/pin`);
+    return response.data;
+  },
+
+  // Toggle archive status
+  toggleArchive: async (id) => {
+    const response = await api.post(`/notes/${id}/archive`);
+    return response.data;
+  },
+
+  // Get recently viewed notes
+  getRecentlyViewed: async (limit = 5) => {
+    const response = await api.get('/notes/recent', { params: { limit } });
     return response.data;
   },
 };
